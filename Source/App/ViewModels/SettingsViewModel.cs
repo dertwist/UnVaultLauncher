@@ -64,6 +64,8 @@ public partial class SettingsViewModel : ViewModelBase
         var current = owner.Settings;
         EngineInstallRoot = current.EngineInstallRoot ?? "";
         VaultCacheDirectory = current.VaultCacheDirectory ?? "";
+        CosmosDirectory = current.CosmosDirectory ?? "";
+        CosmosPlaceholder = Localized.Format(Strings.AutomaticPath, automatic.ResolveCosmosFolder());
         ProjectFolders.CollectionChanged += (_, _) =>
         {
             // Saved with the default first; when it's removed, the first one left takes over.
@@ -85,6 +87,9 @@ public partial class SettingsViewModel : ViewModelBase
         UpdateVaultSummary();
     }
 
+    /// <summary>For what Settings does at once rather than on Save: the Cosmos sign-in.</summary>
+    public MainViewModel Owner => _owner;
+
     public string EngineRootPlaceholder { get; }
     public string EngineRootHint { get; }
     public string VaultPlaceholder { get; }
@@ -97,6 +102,8 @@ public partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty] public partial string EngineInstallRoot { get; set; } = "";
     [ObservableProperty] public partial string VaultCacheDirectory { get; set; } = "";
+    [ObservableProperty] public partial string CosmosDirectory { get; set; } = "";
+    public string CosmosPlaceholder { get; }
     [ObservableProperty] public partial decimal? ParallelDownloads { get; set; }
     [ObservableProperty] public partial decimal? ManifestCacheLimitMB { get; set; }
 
@@ -157,6 +164,13 @@ public partial class SettingsViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task BrowseCosmosFolderAsync()
+    {
+        if (await PickAsync(Strings.PickCosmosFolder, CosmosDirectory) is { } picked)
+            CosmosDirectory = picked;
+    }
+
+    [RelayCommand]
     private Task ShowEngineRootFolderAsync() => ShowFolderAsync(Normalize(EngineInstallRoot) ?? _automaticEngineRoot);
 
     [RelayCommand]
@@ -203,10 +217,11 @@ public partial class SettingsViewModel : ViewModelBase
     {
         string? engineRoot = Normalize(EngineInstallRoot);
         string? vault = Normalize(VaultCacheDirectory);
+        string? cosmos = Normalize(CosmosDirectory);
         // The default goes first, as that's where AppSettings creates new projects; the rest keep their order.
         var projectFolders = ProjectFolders.OrderByDescending(f => f.IsDefault).Select(f => Normalize(f.Path)).OfType<string>()
             .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        foreach (string? folder in projectFolders.Prepend(vault).Prepend(engineRoot))
+        foreach (string? folder in projectFolders.Prepend(cosmos).Prepend(vault).Prepend(engineRoot))
         {
             if (folder is not null && !Path.IsPathFullyQualified(folder))
             {
@@ -218,6 +233,7 @@ public partial class SettingsViewModel : ViewModelBase
         var settings = _owner.Settings;
         settings.EngineInstallRoot = engineRoot;
         settings.VaultCacheDirectory = vault;
+        settings.CosmosDirectory = cosmos;
         settings.ProjectDirectories = projectFolders.Count == 0 ? null : projectFolders;
         settings.ParallelDownloads = (int)Math.Clamp(ParallelDownloads ?? AppSettings.DefaultParallelDownloads, 1, AppSettings.MaxParallelDownloads);
         settings.ManifestCacheLimitMB = (int)Math.Clamp(ManifestCacheLimitMB ?? ManifestCache.DefaultLimitMB, 0, AppSettings.MaxManifestCacheMB);

@@ -12,7 +12,7 @@ namespace UnVault.App.Services;
 internal static class SafeOpen
 {
     /// <summary>The sites the app links to, and their subdomains (www.fab.com, dev.epicgames.com).</summary>
-    private static readonly string[] Sites = ["fab.com", "epicgames.com", "unrealengine.com", "github.com"];
+    private static readonly string[] Sites = ["fab.com", "epicgames.com", "unrealengine.com", "github.com", "leartesstudios.com"];
 
     /// <summary>An https page on one of <see cref="Sites"/>, with no name and password before the site to disguise another.</summary>
     public static bool IsWebPage(string? url) =>

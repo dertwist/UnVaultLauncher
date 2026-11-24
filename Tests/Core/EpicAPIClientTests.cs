@@ -107,6 +107,28 @@ public sealed class EpicAPIClientTests : IDisposable
         Assert.Equal(3, epic.Calls);
     }
 
+    /// <summary>A listing's details are public: asked for without the account's token, and readable signed out.</summary>
+    [Fact]
+    public async Task Reads_a_listing_without_sending_the_sign_in()
+    {
+        bool? authorized = null;
+        var epic = new FakeEpic((request, _) =>
+        {
+            authorized = request.Headers.Authorization is not null;
+            return JSON("""{ "title": "Norway Maple", "listingType": "3d-model", "publishedAt": "2026-11-09T16:13:45.380610Z", "tags": [{ "name": "Tree", "slug": "tree" }, { "name": "Forest" }] }""");
+        });
+        var http = new HttpClient(epic);
+        var signedOut = new EpicAPIClient(http, new EpicAccount(new EpicAuthClient(http), new SessionStore(_sessionPath)));
+
+        var listing = await signedOut.GetFabListingAsync("1f65d477-f44e-4ccb-95c1-788c99e33b56");
+
+        Assert.False(authorized);
+        Assert.Equal("https://www.fab.com/i/listings/1f65d477-f44e-4ccb-95c1-788c99e33b56", Assert.Single(epic.Requests));
+        Assert.Equal(("3d-model", new DateTime(2026, 11, 9)), (listing.ListingType, listing.PublishedAt!.Value.UtcDateTime.Date));
+        Assert.Equal(["Tree", "Forest"], listing.Tags!.Select(t => t.Name));
+        Assert.True(DateTimeOffset.UtcNow - listing.FetchedAt < TimeSpan.FromMinutes(1));
+    }
+
     [Fact]
     public async Task A_manifest_server_that_doesnt_answer_hands_over_to_the_next()
     {

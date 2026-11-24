@@ -1,0 +1,55 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:s="using:UnVault.App"
+             xmlns:vm="using:UnVault.App.ViewModels"
+             x:Class="UnVault.App.Views.PictureViewerView"
+             x:DataType="vm:PictureViewerViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Button.onPicture">
+            <Setter Property="Padding" Value="11" />
+            <Setter Property="Background" Value="{StaticResource OverlayBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="19" />
+        </Style>
+        <Style Selector="Button.onPicture > Path">
+            <Setter Property="Stroke" Value="{StaticResource OnAccentBrush}" />
+            <Setter Property="StrokeThickness" Value="1.8" />
+            <Setter Property="StrokeLineCap" Value="Round" />
+            <Setter Property="StrokeJoin" Value="Round" />
+        </Style>
+    </UserControl.Styles>
+
+    <!-- A picture of an item's gallery at full size, nearly as large as the window (sized in the code-behind, which also
+         zooms and moves it). The arrows go through the gallery, as they do in the preview behind. -->
+    <Border Classes="card dialog" ClipToBounds="True">
+        <Grid RowDefinitions="*,Auto">
+            <Border x:Name="Stage" Background="#0E0E0E" ClipToBounds="True">
+                <Image x:Name="Picture" Source="{Binding Picture}" Stretch="Uniform" RenderTransformOrigin="0,0" />
+            </Border>
+
+            <Button Classes="onPicture" Command="{Binding Item.PreviousShotCommand}" IsVisible="{Binding Item.HasSeveralShots}"
+                    HorizontalAlignment="Left" VerticalAlignment="Center" Margin="14,0"
+                    ToolTip.Tip="{x:Static s:Strings.PreviousPicture}" AutomationProperties.Name="{x:Static s:Strings.PreviousPicture}">
+                <Path Data="M9,1 L2,8 L9,15" Width="11" Height="16" />
+            </Button>
+            <Button Classes="onPicture" Command="{Binding Item.NextShotCommand}" IsVisible="{Binding Item.HasSeveralShots}"
+                    HorizontalAlignment="Right" VerticalAlignment="Center" Margin="14,0"
+                    ToolTip.Tip="{x:Static s:Strings.NextPicture}" AutomationProperties.Name="{x:Static s:Strings.NextPicture}">
+                <Path Data="M2,1 L9,8 L2,15" Width="11" Height="16" />
+            </Button>
+            <Button Classes="onPicture" Command="{Binding CloseCommand}" IsCancel="True" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="14"
+                    ToolTip.Tip="{x:Static s:Strings.Close}" AutomationProperties.Name="{x:Static s:Strings.Close}">
+                <Path Data="M0,0 L11,11 M11,0 L0,11" />
+            </Button>
+
+            <Border Grid.Row="1" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,1,0,0" Padding="18,10">
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                    <TextBlock Text="{Binding Item.Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{x:Static s:Strings.PictureViewerHint}" Classes="muted small" VerticalAlignment="Center" Margin="16,0" />
+                    <TextBlock Grid.Column="2" Text="{Binding Item.ShotPositionText}" Classes="muted" VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

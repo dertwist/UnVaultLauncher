@@ -310,6 +310,14 @@ public partial class ComponentPickerViewModel : ViewModelBase
 
         freeSpace = free >= 0 ? Localized.Format(Strings.FreeOnDrive, ByteSize.Format(free), Path.GetPathRoot(directory)) : "";
 
+        // Before anything is downloaded: the Epic Games Launcher's own folder under Program Files lets only administrators
+        // write, and an install started there fails at its first file.
+        if (canConfirm && Path.IsPathFullyQualified(directory) && !_owner.CanWriteTo(directory))
+        {
+            canConfirm = false;
+            warning = IsModify ? Strings.FolderNeedsAdministratorToChange : Strings.FolderNeedsAdministrator;
+        }
+
         Dispatcher.UIThread.Post(() =>
         {
             if (request != _recalculation)

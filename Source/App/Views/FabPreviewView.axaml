@@ -1,0 +1,156 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:s="using:UnVault.App"
+             xmlns:vm="using:UnVault.App.ViewModels"
+             x:Class="UnVault.App.Views.FabPreviewView"
+             x:DataType="vm:FabItemViewModel">
+
+    <UserControl.Styles>
+        <!-- Round buttons lying on a picture: close, and the arrows to the picture before and after -->
+        <Style Selector="Button.onPicture">
+            <Setter Property="Padding" Value="9" />
+            <Setter Property="Background" Value="{StaticResource OverlayBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="16" />
+        </Style>
+        <Style Selector="Button.onPicture > Path">
+            <Setter Property="Stroke" Value="{StaticResource OnAccentBrush}" />
+            <Setter Property="StrokeThickness" Value="1.6" />
+            <Setter Property="StrokeLineCap" Value="Round" />
+            <Setter Property="StrokeJoin" Value="Round" />
+        </Style>
+        <!-- A picture of the strip; the one shown large is outlined -->
+        <Style Selector="Border.shot">
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Margin" Value="0,0,4,0" />
+        </Style>
+        <Style Selector="Border.shot.current">
+            <Setter Property="BorderBrush" Value="{StaticResource AccentTextBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <!-- An item's preview, beside the Library's grid: its pictures, what's known of it, and its store's description as
+         plain text. The tile's own buttons are repeated, so nothing needs finding the tile again. As wide as the Library
+         makes it (the user drags its edge); the large picture stays 16:9 (see the code-behind). -->
+    <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1,0,0,0">
+        <ScrollViewer>
+            <StackPanel>
+                <!-- The gallery's current picture. A click opens it at full size, to zoom into; the arrows go to the one
+                     before and after. -->
+                <Panel x:Name="PictureHost" Height="214">
+                    <Button Command="{Binding OpenViewerCommand}" Padding="0" BorderThickness="0" CornerRadius="0" Cursor="Hand"
+                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                            Background="{StaticResource PictureBackgroundBrush}"
+                            ToolTip.Tip="{x:Static s:Strings.ViewFullSize}" AutomationProperties.Name="{x:Static s:Strings.ViewFullSize}">
+                        <Panel ClipToBounds="True">
+                            <TextBlock Text="{Binding KindLabel}" Classes="muted small" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Image Source="{Binding Picture}" Stretch="UniformToFill" />
+                        </Panel>
+                    </Button>
+                    <Button Classes="onPicture" Command="{Binding PreviousShotCommand}" IsVisible="{Binding HasSeveralShots}"
+                            HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,0"
+                            ToolTip.Tip="{x:Static s:Strings.PreviousPicture}" AutomationProperties.Name="{x:Static s:Strings.PreviousPicture}">
+                        <Path Data="M7,1 L2,6.5 L7,12" Width="9" Height="13" />
+                    </Button>
+                    <Button Classes="onPicture" Command="{Binding NextShotCommand}" IsVisible="{Binding HasSeveralShots}"
+                            HorizontalAlignment="Right" VerticalAlignment="Center" Margin="8,0"
+                            ToolTip.Tip="{x:Static s:Strings.NextPicture}" AutomationProperties.Name="{x:Static s:Strings.NextPicture}">
+                        <Path Data="M2,1 L7,6.5 L2,12" Width="9" Height="13" />
+                    </Button>
+                    <Button Classes="onPicture" Command="{Binding ClosePreviewCommand}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
+                            ToolTip.Tip="{x:Static s:Strings.ClosePreview}" AutomationProperties.Name="{x:Static s:Strings.ClosePreview}">
+                        <Path Data="M0,0 L9,9 M9,0 L0,9" />
+                    </Button>
+                </Panel>
+
+                <!-- The gallery, small, in one row that scrolls sideways. A click shows one large above. -->
+                <ScrollViewer x:Name="Strip" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                              IsVisible="{Binding HasSeveralShots}" Margin="0,6,0,0">
+                    <ItemsControl x:Name="ShotList" ItemsSource="{Binding Shots}" Margin="6,0,2,10">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:PreviewShot">
+                                <Border Classes="shot" Classes.current="{Binding IsCurrent}">
+                                    <Button Padding="0" Width="92" Height="52" BorderThickness="0" CornerRadius="4" ClipToBounds="True"
+                                            Background="{StaticResource PictureBackgroundBrush}" Cursor="Hand"
+                                            Command="{Binding $parent[ItemsControl].((vm:FabItemViewModel)DataContext).ShowShotCommand}" CommandParameter="{Binding}"
+                                            ToolTip.Tip="{x:Static s:Strings.ShowLarge}" AutomationProperties.Name="{x:Static s:Strings.ShowLarge}">
+                                        <Image Source="{Binding Picture}" Stretch="UniformToFill" Width="92" Height="52" />
+                                    </Button>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <StackPanel Margin="18,9,18,20" Spacing="14">
+                    <StackPanel Spacing="3">
+                        <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding SellerText}" Classes="muted" TextWrapping="Wrap"
+                                   IsVisible="{Binding SellerText, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                    </StackPanel>
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Button Content="{Binding PrimaryText}" Classes.accent="{Binding !HasUpdate}" Classes.update="{Binding HasUpdate}"
+                                Command="{Binding PrimaryCommand}" IsEnabled="{Binding IsIdle}" ToolTip.Tip="{Binding PrimaryToolTip}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                        <Button Grid.Column="1" Margin="6,0,0,0" Content="{x:Static s:Strings.OpenOnFab}" Command="{Binding OpenFabPageCommand}"
+                                IsVisible="{Binding HasFabPage}" />
+                        <Button Grid.Column="1" Margin="6,0,0,0" Content="{x:Static s:Strings.OpenOnCosmos}" Command="{Binding OpenCosmosPageCommand}"
+                                IsVisible="{Binding IsFromCosmos}" />
+                    </Grid>
+
+                    <ItemsControl ItemsSource="{Binding Details}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:DetailRow">
+                                <Grid ColumnDefinitions="130,*" Margin="0,2">
+                                    <TextBlock Text="{Binding Label}" Classes="muted" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- What's on this PC of it, and what an update would refresh -->
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="{Binding InstalledText}" Classes="small" TextWrapping="Wrap" Foreground="{StaticResource SuccessBrush}"
+                                   IsVisible="{Binding IsInstalled}" />
+                        <TextBlock Text="{Binding DownloadedText}" Classes="muted small" TextWrapping="Wrap" IsVisible="{Binding IsDownloaded}" />
+                        <TextBlock Text="{Binding UpdateText}" Classes="small" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}"
+                                   IsVisible="{Binding HasUpdate}" />
+                    </StackPanel>
+
+                    <ItemsControl ItemsSource="{Binding Tags}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="x:String">
+                                <Border Classes="chip" Margin="0,0,6,6">
+                                    <TextBlock Text="{Binding}" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Text="{Binding DescriptionText}" TextWrapping="Wrap" LineHeight="20"
+                               IsVisible="{Binding DescriptionText, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+                    <!-- What the store's page tells under "Technical details" (Fab) or "Features" (Cosmos) -->
+                    <StackPanel Spacing="6" IsVisible="{Binding TechnicalText, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <TextBlock Text="{x:Static s:Strings.TechnicalDetails}" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding TechnicalText}" Classes="muted" TextWrapping="Wrap" LineHeight="20" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
+</UserControl>

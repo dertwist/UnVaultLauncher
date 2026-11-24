@@ -47,6 +47,17 @@ public sealed class AppSettings
     /// <summary>Closing the window keeps the app running in the system tray, downloads included; Quit is in the tray icon's menu.</summary>
     public bool CloseToTray { get; set; }
 
+    /// <summary>How wide the user dragged the Library's preview of an item, in layout units. Null = as it comes.</summary>
+    public double? PreviewWidth { get; set; }
+
+    /// <summary>Where downloads from Leartes' Cosmos store are kept. Null = automatic (<see cref="ResolveCosmosFolder"/>).</summary>
+    public string? CosmosDirectory { get; set; }
+
+    /// <summary>The user's folder for Cosmos downloads; else a Cosmos folder in their Downloads, where a browser would have put them.</summary>
+    public string ResolveCosmosFolder() =>
+        !string.IsNullOrWhiteSpace(CosmosDirectory) ? CosmosDirectory
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "Cosmos");
+
     public static string FilePath => Path.Combine(AppPaths.DataDirectory, "settings.json");
 
     public static AppSettings Load(string? path = null)

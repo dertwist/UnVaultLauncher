@@ -10,8 +10,19 @@
     <Grid RowDefinitions="Auto,Auto,*">
 
         <!-- Its loading progress and item count are on the tab row, beside the tabs -->
-        <StackPanel Spacing="12" Margin="24,20,24,0" MaxWidth="{StaticResource PageMaxWidth}">
-            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
+        <StackPanel Spacing="8" Margin="24,20,24,0" MaxWidth="{StaticResource PageMaxWidth}">
+            <StackPanel.Styles>
+                <!-- Filters keep their gap when they wrap onto another line in a narrow window -->
+                <Style Selector="WrapPanel > ComboBox">
+                    <Setter Property="Margin" Value="0,0,8,4" />
+                    <Setter Property="MinWidth" Value="130" />
+                    <Setter Property="MaxWidth" Value="220" />
+                </Style>
+                <Style Selector="WrapPanel > CheckBox">
+                    <Setter Property="Margin" Value="0,0,16,0" />
+                </Style>
+            </StackPanel.Styles>
+            <Grid ColumnDefinitions="*,Auto,Auto">
                 <TextBox Text="{Binding SearchText}" PlaceholderText="{x:Static s:Strings.SearchYourLibrary}">
                     <TextBox.KeyBindings>
                         <KeyBinding Gesture="Escape" Command="{Binding ClearSearchCommand}" />
@@ -23,11 +34,30 @@
                         </Button>
                     </TextBox.InnerRightContent>
                 </TextBox>
-                <ComboBox Grid.Column="1" Margin="8,0,0,0" MinWidth="130" ItemsSource="{Binding KindOptions}" SelectedIndex="{Binding KindIndex}" />
-                <ComboBox Grid.Column="2" Margin="8,0,0,0" MinWidth="130" ItemsSource="{Binding EngineOptions}" SelectedItem="{Binding EngineOption}" />
-                <CheckBox Grid.Column="3" Margin="12,0,0,0" Content="{x:Static s:Strings.DownloadedOnly}" IsChecked="{Binding DownloadedOnly}" />
-                <CheckBox Grid.Column="4" Margin="12,0,0,0" Content="{Binding UpdatesFilterText}" IsChecked="{Binding UpdatesOnly}" />
+                <TextBlock Grid.Column="1" Text="{x:Static s:Strings.SortBy}" Classes="muted" VerticalAlignment="Center" Margin="14,0,0,0" />
+                <ComboBox Grid.Column="2" Margin="8,0,0,0" MinWidth="140" ItemsSource="{Binding SortOptions}" SelectedIndex="{Binding SortIndex}"
+                          ToolTip.Tip="{x:Static s:Strings.SortTip}" AutomationProperties.Name="{x:Static s:Strings.SortBy}" />
             </Grid>
+            <WrapPanel>
+                <!-- Fab or Cosmos: only once there's a second store to tell apart -->
+                <ComboBox ItemsSource="{Binding SourceOptions}" SelectedIndex="{Binding SourceIndex}" IsVisible="{Binding Owner.IsCosmosSignedIn}" />
+                <ComboBox ItemsSource="{Binding KindOptions}" SelectedIndex="{Binding KindIndex}" />
+                <ComboBox ItemsSource="{Binding CategoryOptions}" SelectedItem="{Binding CategoryOption}" />
+                <ComboBox ItemsSource="{Binding ListingOptions}" SelectedItem="{Binding ListingOption}" />
+                <ComboBox ItemsSource="{Binding SellerOptions}" SelectedItem="{Binding SellerOption}" />
+                <ComboBox ItemsSource="{Binding EngineOptions}" SelectedItem="{Binding EngineOption}" />
+            </WrapPanel>
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="{Binding DownloadShownText}" Command="{Binding DownloadShownCommand}"
+                        ToolTip.Tip="{x:Static s:Strings.DownloadShownTip}" VerticalAlignment="Center" />
+                <WrapPanel VerticalAlignment="Center">
+                    <CheckBox Content="{x:Static s:Strings.DownloadedOnly}" IsChecked="{Binding DownloadedOnly}" />
+                    <CheckBox Content="{x:Static s:Strings.InstalledOnly}" IsChecked="{Binding InstalledOnly}" />
+                    <CheckBox Content="{Binding UpdatesFilterText}" IsChecked="{Binding UpdatesOnly}" />
+                    <CheckBox Content="{x:Static s:Strings.FavoritesOnly}" IsChecked="{Binding FavoritesOnly}" />
+                    <CheckBox Content="{x:Static s:Strings.ShowHidden}" IsChecked="{Binding ShowHidden}" />
+                </WrapPanel>
+            </DockPanel>
         </StackPanel>
 
         <StackPanel Grid.Row="1" Spacing="8" Margin="24,12,24,0" MaxWidth="{StaticResource PageMaxWidth}">
@@ -43,7 +73,16 @@
             </Border>
         </StackPanel>
 
-        <ScrollViewer Grid.Row="2" x:Name="Scroller" Margin="0,12,0,0">
+        <!-- The preview of the item clicked takes the window's right edge, down the grid's height; the grid keeps the rest -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,12,0,0">
+        <Panel Grid.Column="1" Width="{Binding PreviewWidth}" IsVisible="{Binding Preview, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <views:FabPreviewView DataContext="{Binding Preview}" />
+            <!-- Its left edge, to drag it wider or narrower (see the code-behind) -->
+            <Border x:Name="PreviewEdge" Width="7" HorizontalAlignment="Left" Background="Transparent" Cursor="SizeWestEast"
+                    ToolTip.Tip="{x:Static s:Strings.ResizePreview}" />
+        </Panel>
+
+        <ScrollViewer x:Name="Scroller">
             <Panel x:Name="Page" Margin="24,0,24,10" MaxWidth="{StaticResource PageMaxWidth}">
                 <TextBlock Text="{Binding EmptyText}" Classes="muted" HorizontalAlignment="Center" Margin="0,40"
                            IsVisible="{Binding IsEmpty}" />
@@ -62,5 +101,6 @@
                 </ItemsControl>
             </Panel>
         </ScrollViewer>
+        </Grid>
     </Grid>
 </UserControl>

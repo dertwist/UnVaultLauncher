@@ -127,15 +127,18 @@ public sealed partial class EpicAPIClient(HttpClient http, EpicAccount account)
     /// is tried again after a growing wait, or as long as Epic asks with "retry after". With <paramref name="retryForbidden"/>,
     /// so is a 403: Fab's edge returns those sporadically for valid requests.
     /// </summary>
-    private async Task<T> SendJSONAsync<T>(Func<HttpRequestMessage> createRequest, JsonTypeInfo<T> typeInfo, CancellationToken cancellationToken, bool retryForbidden = false)
+    /// <param name="authorized">False for what Epic gives to anyone: the request then goes without the account's token.</param>
+    private async Task<T> SendJSONAsync<T>(Func<HttpRequestMessage> createRequest, JsonTypeInfo<T> typeInfo, CancellationToken cancellationToken,
+        bool retryForbidden = false, bool authorized = true)
     {
         bool renewed = false;
         for (int attempt = 1; ; attempt++)
         {
-            var session = await account.GetValidSessionAsync(cancellationToken);
+            var session = authorized ? await account.GetValidSessionAsync(cancellationToken) : null;
 
             using var request = createRequest();
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", session.AccessToken);
+            if (session is not null)
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", session.AccessToken);
 
             HttpResponseMessage sent;
             try
@@ -150,7 +153,7 @@ public sealed partial class EpicAPIClient(HttpClient http, EpicAccount account)
             }
 
             using var response = sent;
-            if (response.StatusCode == HttpStatusCode.Unauthorized && !renewed)
+            if (response.StatusCode == HttpStatusCode.Unauthorized && !renewed && session is not null)
             {
                 // The token was turned down before its time (sessions ended elsewhere, a password change): a new one, then
                 // once more. If the session itself is over, that's a NotLoggedInException.

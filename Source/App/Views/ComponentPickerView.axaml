@@ -80,14 +80,16 @@
                         <Border Classes="banner" Margin="0,16,0,0" IsVisible="{Binding Note, Converter={x:Static ObjectConverters.IsNotNull}}">
                             <TextBlock Text="{Binding Note}" TextWrapping="Wrap" />
                         </Border>
-                        <Border Classes="banner warning" Margin="0,8,0,0" IsVisible="{Binding Warning, Converter={x:Static ObjectConverters.IsNotNull}}">
-                            <TextBlock Text="{Binding Warning}" TextWrapping="Wrap" />
-                        </Border>
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>
 
             <Border Grid.Row="2" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,1,0,0" Padding="24,14" Margin="0,16,0,0">
+                <StackPanel Spacing="12">
+                <!-- Why Install can't be pressed, beside it: at the end of the list above it went unseen -->
+                <Border Classes="banner warning" IsVisible="{Binding Warning, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <TextBlock Text="{Binding Warning}" TextWrapping="Wrap" />
+                </Border>
                 <Grid ColumnDefinitions="*,Auto">
                     <StackPanel VerticalAlignment="Center" IsVisible="{Binding IsReady}">
                         <TextBlock Text="{Binding SummaryText}" FontWeight="SemiBold" />
@@ -98,6 +100,7 @@
                         <Button Content="{Binding ConfirmText}" Classes="accent" Command="{Binding ConfirmCommand}" IsDefault="True" />
                     </StackPanel>
                 </Grid>
+                </StackPanel>
             </Border>
         </Grid>
     </Border>

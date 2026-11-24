@@ -21,6 +21,7 @@ public partial class OperationViewModel : ViewModelBase
     public delegate Task<string?> Work(OperationViewModel operation, InstallStatus status, CancellationToken cancellationToken);
 
     private readonly MainViewModel _owner;
+    private readonly object? _queue;
 
     /// <summary>Kept for retry; dropped once done, since it can hold an engine's whole manifest.</summary>
     private Work? _work;
@@ -36,8 +37,9 @@ public partial class OperationViewModel : ViewModelBase
     /// <param name="work">Does it; returns a short note on what came of it ("freed 114 MB"), or null.</param>
     /// <param name="engines">The engines it works on (installing one, or plugins in them), by app name.</param>
     /// <param name="fabItemKey">The Library item it works on.</param>
+    /// <param name="queue">Operations given the same one run one at a time, in the order started.</param>
     public OperationViewModel(MainViewModel owner, string subject, OperationAction action, Work work, IReadOnlyList<string>? engines = null,
-        string? fabItemKey = null)
+        string? fabItemKey = null, object? queue = null)
     {
         _owner = owner;
         _work = work;
@@ -45,6 +47,7 @@ public partial class OperationViewModel : ViewModelBase
         Action = action;
         EngineAppNames = engines ?? [];
         FabItemKey = fabItemKey;
+        _queue = queue;
         _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(250), DispatcherPriority.Background, (_, _) => UpdateProgress());
     }
 
@@ -63,9 +66,12 @@ public partial class OperationViewModel : ViewModelBase
 
     public bool WorksOn(string engineAppName) => EngineAppNames.Contains(engineAppName, StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Works on an engine or a Library item the other one does too: the two would write the same files.</summary>
+    /// <summary>
+    /// Works on an engine or a Library item the other one does too: the two would write the same files. Or the two were
+    /// started to run one after another.
+    /// </summary>
     public bool Overlaps(OperationViewModel other) =>
-        EngineAppNames.Any(other.WorksOn) || FabItemKey is not null && FabItemKey == other.FabItemKey;
+        EngineAppNames.Any(other.WorksOn) || FabItemKey is not null && FabItemKey == other.FabItemKey || _queue is not null && _queue == other._queue;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ActionLine))]
@@ -172,7 +178,8 @@ public partial class OperationViewModel : ViewModelBase
         {
             State = OperationState.Failed;
             Phase = Strings.PhaseFailed;
-            Message = ex.Message;
+            // Windows' own words don't say what to do about it.
+            Message = ex is UnauthorizedAccessException ? Localized.Format(Strings.AccessDenied, ex.Message) : ex.Message;
             if (ex is NotLoggedInException ended)
                 _owner.SessionEnded(ended);
         }

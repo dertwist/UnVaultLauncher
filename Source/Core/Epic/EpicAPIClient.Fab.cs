@@ -85,6 +85,26 @@ public sealed partial class EpicAPIClient
             (item.Images ?? []).Select(i => i.UploadedDate ?? DateTimeOffset.MinValue).DefaultIfEmpty(DateTimeOffset.MinValue).Max();
     }
 
+    /// <summary>
+    /// A listing's details. Fab gives them to anyone, as it does the listing's page, so no sign-in is sent. A 403 isn't
+    /// asked again here: it's Fab's answer for a listing it shows only signed in on its site (mature content).
+    /// </summary>
+    public async Task<FabListing> GetFabListingAsync(string listingID, CancellationToken cancellationToken = default)
+    {
+        var listing = await SendJSONAsync(
+            () => new HttpRequestMessage(HttpMethod.Get, $"{EpicEndpoints.FabService}/i/listings/{Uri.EscapeDataString(listingID)}"),
+            FabJSONContext.Default.FabListing, cancellationToken, authorized: false);
+        listing.FetchedAt = DateTimeOffset.UtcNow;
+        listing.Fields = Fab.FabListingCache.Fields;
+        return listing;
+    }
+
+    /// <summary>What a listing's page shows under "Technical details", as plain text; empty when it has none. Public, like <see cref="GetFabListingAsync"/>.</summary>
+    public async Task<string> GetFabTechnicalDetailsAsync(string listingID, CancellationToken cancellationToken = default) =>
+        Fab.FabTechnicalDetails.ToText(await SendJSONAsync(
+            () => new HttpRequestMessage(HttpMethod.Get, $"{EpicEndpoints.FabService}/i/listings/{Uri.EscapeDataString(listingID)}/asset-formats/unreal-engine"),
+            FabJSONContext.Default.JsonElement, cancellationToken, authorized: false));
+
     /// <summary>Signed manifest locations for one artifact (one engine version of a Fab item).</summary>
     public async Task<FabDownloadInfo> GetFabDownloadInfoAsync(
         string artifactID, string assetNamespace, string assetID, string platform = "Windows", CancellationToken cancellationToken = default)

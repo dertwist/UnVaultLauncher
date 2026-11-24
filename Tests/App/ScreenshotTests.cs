@@ -478,6 +478,43 @@ public class ScreenshotTests
         Assert.Equal(["UE_5.8", "UE_5.4"], fetched);
     }
 
+    /// <summary>
+    /// C:\Program Files\Epic Games, where the Epic Games Launcher puts engines, lets only administrators write. An install
+    /// there used to start and fail at its first file ("Access to the path … is denied"); now it can't be started, and why is said.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task An_engine_cant_be_installed_into_a_folder_only_administrators_may_change()
+    {
+        var viewModel = SampleMainViewModel();
+        var asked = new List<string>();
+        bool writable = false;
+        viewModel.CanWriteTo = folder =>
+        {
+            lock (asked)
+                asked.Add(folder);
+            return writable;
+        };
+        Task<InstallSource> Fetch(EpicAsset asset, CancellationToken _) =>
+            Task.FromResult(new InstallSource(new DownloadedManifest(SampleManifest(asset.AppName, asset.BuildVersion), [], [], new Dictionary<string, string>()), "ue", "item"));
+        var picker = ComponentPickerViewModel.ForInstall(viewModel, viewModel.InstallableEngines, fetch: Fetch);
+        viewModel.Dialog = picker;
+        var window = Show(viewModel);
+        await picker.LoadAsync();
+        WaitFor(() => picker.Warning is not null);
+
+        Assert.False(picker.CanConfirm);
+        Assert.False(picker.ConfirmCommand.CanExecute(null));
+        Assert.StartsWith("Windows lets only administrators change this folder", picker.Warning);
+        Assert.Contains(picker.Directory, asked);
+        Save(window, "install-picker-no-access.png");
+
+        // Another folder, of the user's own: nothing in the way.
+        writable = true;
+        picker.Directory = @"D:\Engines\UE_5.8";
+        WaitFor(() => picker.CanConfirm);
+        Assert.Null(picker.Warning);
+    }
+
     [AvaloniaFact]
     public async Task Modify_component_picker()
     {
@@ -603,6 +640,35 @@ public class ScreenshotTests
         WaitFor(() => fab.Items.Single(i => i.Title.StartsWith("Modular Warehouse")).Thumbnail is not null); // local:// picture loaded
         Save(window, "fab-library.png");
 
+        // A click on a tile shows the item's preview beside the grid, which gives up columns for it.
+        Assert.Equal(4, fab.Columns);
+        blockout.ShowPreviewCommand.Execute(null);
+        WaitFor(() => fab.Columns == 2);
+        Assert.Single(window.GetVisualDescendants().OfType<FabPreviewView>(), p => p.IsEffectivelyVisible);
+        Save(window, "fab-library-preview.png");
+        blockout.ClosePreviewCommand.Execute(null);
+        WaitFor(() => fab.Columns == 4);
+
+        // An item with a picture: it's the preview's gallery (alone here, so no strip or arrows), and a click on it shows it
+        // at full size over the window, where the wheel zooms.
+        var warehouse = fab.Items.Single(i => i.Title.StartsWith("Modular Warehouse"));
+        warehouse.ShowPreviewCommand.Execute(null);
+        WaitFor(() => warehouse.Picture is not null);
+        Assert.Equal((1, false, ""), (warehouse.Shots.Count, warehouse.HasSeveralShots, warehouse.ShotPositionText));
+        Assert.True(warehouse.Shots[0].IsCurrent);
+        Save(window, "fab-library-preview-picture.png");
+        warehouse.OpenViewerCommand.Execute(null);
+        var viewer = Assert.IsType<PictureViewerViewModel>(viewModel.Dialog);
+        WaitFor(() => viewer.Picture is not null && window.GetVisualDescendants().OfType<PictureViewerView>().Any(v => v.Bounds.Width > 600));
+        Save(window, "picture-viewer.png");
+        viewer.CloseCommand.Execute(null);
+        Assert.Null(viewModel.Dialog);
+        // The preview went on behind it; closing that gives the pictures back.
+        Assert.Same(warehouse, fab.Preview);
+        warehouse.ClosePreviewCommand.Execute(null);
+        Assert.Equal((0, null, null), (warehouse.Shots.Count, warehouse.Picture, warehouse.CurrentShot));
+        WaitFor(() => fab.Columns == 4);
+
         // Greybox Tools has a newer build on Fab than its 5.7 download and its 5.7 install: its main button becomes Update
         // (its usual action moves to the ⋯ menu), and the Library tab a yellow line.
         Assert.True(blockout.HasUpdate);
@@ -619,7 +685,7 @@ public class ScreenshotTests
         fab.UpdatesOnly = false;
 
         fab.KindIndex = 1; // plugins
-        Assert.Equal(["Edge Smoother", "Greybox Tools"], fab.Items.Select(i => i.Title));
+        Assert.Equal(["Greybox Tools", "Edge Smoother"], fab.Items.Select(i => i.Title)); // newest first: the library lists Edge Smoother before it
         fab.KindIndex = 0;
         fab.DownloadedOnly = true;
         Assert.Equal(4, fab.Items.Count);
@@ -647,7 +713,7 @@ public class ScreenshotTests
         fab.SearchText = "Item 09";
         Assert.Equal(1000, fab.Items.Count);
         WaitFor(() => fab.Items.Count == 100); // Item 0900 … Item 0999
-        Assert.Equal("Item 0900", fab.Rows[0].Items[0].Title);
+        Assert.Equal("Item 0999", fab.Rows[0].Items[0].Title); // newest first: Fab lists what was got first first
         var clear = window.GetVisualDescendants().OfType<Button>().Single(b => b.Classes.Contains("clear"));
         Assert.True(clear.IsVisible);
         Save(window, "fab-library-large.png");
@@ -1168,6 +1234,7 @@ public class ScreenshotTests
         string history = Path.Combine(Path.GetTempPath(), $"unvault-history-{Guid.NewGuid():N}.json");
         var viewModel = new MainViewModel(new AppServices(), history) { IsSignedIn = true, DisplayName = "Test Account" };
         viewModel.Settings.EngineInstallRoot = @"E:\Epic Games"; // set, so nothing asks this PC's Epic Games Launcher
+        viewModel.CanWriteTo = _ => true; // nor tries this PC's folders
         viewModel.SetEngines(
         [
             new LocalEngine("UE_5.7", @"E:\Epic Games\UE_5.7", "5.7.4-51494982+++UE5+Release-5.7-Windows", 26 * GB + 300 * (GB / 1024), LocalInstallKind.UnVault),

@@ -107,9 +107,10 @@ public sealed class ThumbnailCache
     /// <summary>Takes a picture for a tile: from memory, or loaded from disk or the web.</summary>
     /// <param name="key">What the picture belongs to (e.g. the Fab item), so a changing link doesn't mean a new download. Defaults to the link.</param>
     /// <param name="uploaded">When the source says the picture was uploaded; one uploaded after ours was saved is the creator's new picture.</param>
-    public Use Get(string url, string? key = null, DateTimeOffset? uploaded = null)
+    /// <param name="atWidth">The pixel width wanted when it isn't a tile's: an item's preview shows the picture larger.</param>
+    public Use Get(string url, string? key = null, DateTimeOffset? uploaded = null, int? atWidth = null)
     {
-        int width = Width;
+        int width = atWidth ?? Width;
         string memoryKey = $"{key ?? url}|{width}";
         lock (_lock)
         {
@@ -209,8 +210,15 @@ public sealed class ThumbnailCache
             new Uri($"https://media.fab.com/cdn-cgi/image/width={width}{uri.AbsolutePath}"),
         // Old Marketplace pictures: Epic's store image service.
         "cdn1.epicgames.com" when uri.Query.Length == 0 => new Uri($"{uri.GetLeftPart(UriPartial.Path)}?resize=1&w={width}"),
+        // Cosmos's pictures are megabytes each; its site scales them, to the widths it knows only. Wanted wider than
+        // those (the full-size view), the picture itself it is.
+        "cdn.cosmos.leartesstudios.com" when CosmosWidths.FirstOrDefault(w => w >= width) is > 0 and int known =>
+            new Uri($"https://cosmos.leartesstudios.com/_next/image?url={Uri.EscapeDataString(uri.AbsoluteUri)}&w={known}&q=75"),
         _ => uri,
     };
+
+    /// <summary>The widths Cosmos's site scales pictures to; it refuses any other.</summary>
+    private static readonly int[] CosmosWidths = [256, 384, 640, 750, 828, 1080, 1200];
 
     private async Task<Bitmap?> LoadAsync(Entry entry, string url, string key, int width, DateTimeOffset? uploaded)
     {

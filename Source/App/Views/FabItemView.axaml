@@ -10,6 +10,7 @@
         <!-- Status icons on a 12 px grid, drawn as strokes -->
         <StreamGeometry x:Key="CheckIcon">M2,6.5 L5,9.5 L10.5,3</StreamGeometry>
         <StreamGeometry x:Key="DownloadIcon">M6,1.5 V8 M3,5.5 L6,8.5 L9,5.5 M2,11 H10</StreamGeometry>
+        <StreamGeometry x:Key="StarIcon">M6,1 L7.5,4.4 L11.2,4.8 L8.4,7.3 L9.2,10.9 L6,9 L2.8,10.9 L3.6,7.3 L0.8,4.8 L4.5,4.4 Z</StreamGeometry>
     </UserControl.Resources>
     <UserControl.Styles>
         <Style Selector="Path.status">
@@ -20,14 +21,21 @@
             <Setter Property="StrokeJoin" Value="Round" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
+        <!-- The tile whose item the preview beside the grid shows -->
+        <Style Selector="Border.card.previewed">
+            <Setter Property="BorderBrush" Value="{StaticResource AccentTextBrush}" />
+        </Style>
     </UserControl.Styles>
 
-    <!-- A fixed size, set by its row (FabRowView); only the gaps between tiles follow the window -->
-    <Border Classes="card" Padding="0">
+    <!-- A fixed size, set by its row (FabRowView); only the gaps between tiles follow the window. A click anywhere but on
+         its buttons opens the item's preview beside the grid (see the code-behind). -->
+    <Border Classes="card" Classes.previewed="{Binding IsPreviewed}" Padding="0" Cursor="Hand">
         <Grid RowDefinitions="Auto,*,Auto">
 
-            <!-- Picture, 16:9, left clear; the type shows in its place until it loads (or when there's none) -->
-            <Border x:Name="Picture" Height="133" CornerRadius="10,10,0,0" ClipToBounds="True" Background="{StaticResource PictureBackgroundBrush}">
+            <!-- Picture, 16:9, left clear; the type shows in its place until it loads (or when there's none). Dimmed on an
+                 item the user hid, which shows only while hidden items are asked for. -->
+            <Border x:Name="Picture" Height="133" CornerRadius="10,10,0,0" ClipToBounds="True" Background="{StaticResource PictureBackgroundBrush}"
+                    Opacity="{Binding !IsHidden, Converter={x:Static vm:Converters.AvailableOpacity}}">
                 <Panel>
                     <TextBlock Text="{Binding KindLabel}" Classes="muted small" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
@@ -52,6 +60,10 @@
                             ToolTip.Tip="{Binding InstalledText}">
                         <Path Classes="status" Data="{StaticResource CheckIcon}" Stroke="{StaticResource SuccessBrush}" />
                     </Border>
+                    <Border DockPanel.Dock="Right" Background="Transparent" Margin="8,0,0,0" IsVisible="{Binding IsFavorite}"
+                            ToolTip.Tip="{x:Static s:Strings.Favorite}">
+                        <Path Classes="status" Data="{StaticResource StarIcon}" Stroke="{StaticResource WarningBrush}" />
+                    </Border>
                     <TextBlock Text="{Binding EngineVersionsText}" Classes="muted small" TextTrimming="CharacterEllipsis"
                                ToolTip.Tip="{Binding EngineVersionsText}" />
                 </DockPanel>
@@ -65,11 +77,17 @@
                 <Button Grid.Column="1" Content="⋯" Margin="6,0,0,0" ToolTip.Tip="{x:Static s:Strings.More}" AutomationProperties.Name="{x:Static s:Strings.More}">
                     <Button.Flyout>
                         <MenuFlyout>
+                            <MenuItem Header="{x:Static s:Strings.Details}" Command="{Binding ShowPreviewCommand}" />
                             <MenuItem Header="{Binding ActionText}" Command="{Binding ActionCommand}" IsVisible="{Binding HasUpdate}" IsEnabled="{Binding IsIdle}" />
                             <MenuItem Header="{x:Static s:Strings.InstallToProject}" Command="{Binding InstallToProjectCommand}" IsVisible="{Binding ShowsInstallToProject}" />
-                            <MenuItem Header="{x:Static s:Strings.DownloadToVaultCache}" Command="{Binding DownloadCommand}" IsEnabled="{Binding IsInLibrary}" />
+                            <MenuItem Header="{x:Static s:Strings.DownloadToVaultCache}" Command="{Binding DownloadCommand}" IsEnabled="{Binding IsInLibrary}" IsVisible="{Binding !IsFromCosmos}" />
                             <MenuItem Header="{x:Static s:Strings.ShowInFolder}" Command="{Binding ShowInFolderCommand}" IsEnabled="{Binding HasFolder}" />
-                            <MenuItem Header="{x:Static s:Strings.OpenOnFab}" Command="{Binding OpenFabPageCommand}" IsEnabled="{Binding HasFabPage}" />
+                            <MenuItem Header="{x:Static s:Strings.OpenOnFab}" Command="{Binding OpenFabPageCommand}" IsEnabled="{Binding HasFabPage}" IsVisible="{Binding !IsFromCosmos}" />
+                            <MenuItem Header="{x:Static s:Strings.ActionCreateProject}" Command="{Binding CreateProjectCommand}" IsVisible="{Binding ShowsCreateProject}" />
+                            <MenuItem Header="{x:Static s:Strings.DownloadToCosmosFolder}" Command="{Binding DownloadCosmosCommand}" IsVisible="{Binding IsFromCosmos}" />
+                            <MenuItem Header="{x:Static s:Strings.OpenOnCosmos}" Command="{Binding OpenCosmosPageCommand}" IsVisible="{Binding IsFromCosmos}" />
+                            <MenuItem Header="{Binding FavoriteText}" Command="{Binding ToggleFavoriteCommand}" />
+                            <MenuItem Header="{Binding HiddenText}" Command="{Binding ToggleHiddenCommand}" />
                             <MenuItem Header="{x:Static s:Strings.RemoveFromEngine}" Command="{Binding RemoveCommand}" IsVisible="{Binding ShowsRemove}" IsEnabled="{Binding IsInstalled}" />
                         </MenuFlyout>
                     </Button.Flyout>

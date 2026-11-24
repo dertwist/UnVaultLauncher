@@ -297,6 +297,9 @@
                         <DataTemplate DataType="vm:CategoryNameViewModel">
                             <views:CategoryNameView />
                         </DataTemplate>
+                        <DataTemplate DataType="vm:PictureViewerViewModel">
+                            <views:PictureViewerView />
+                        </DataTemplate>
                     </ContentControl.DataTemplates>
                 </ContentControl>
                 <!-- Under a question, the dialog is dimmed as the page is under it; the page isn't dimmed a second time -->

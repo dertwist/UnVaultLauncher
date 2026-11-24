@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using UnVault.App.Services;
 using UnVault.Core;
+using UnVault.Core.Cosmos;
 using UnVault.Core.EGL;
 using UnVault.Core.Epic;
 using UnVault.Core.Fab;
@@ -49,6 +50,7 @@ public partial class MainViewModel : ViewModelBase
         };
         GroupHistory();
         UpdateAccount();
+        IsCosmosSignedIn = Services.CosmosTokens.Load() is not null;
     }
 
     public AppServices Services { get; }
@@ -215,6 +217,7 @@ public partial class MainViewModel : ViewModelBase
     partial void OnDialogChanged(ViewModelBase? oldValue, ViewModelBase? newValue)
     {
         Prompt = null; // a question belongs to the dialog it was asked over
+        (oldValue as PictureViewerViewModel)?.Closed();
         // These read build manifests (an engine's is large); give that memory back once they're closed.
         if (oldValue is ComponentPickerViewModel or FabActionViewModel)
             MemoryRelief.Release();
@@ -532,6 +535,139 @@ public partial class MainViewModel : ViewModelBase
         await RefreshAfterAccountChangeAsync();
     }
 
+    /// <summary>Signed in to Leartes' Cosmos store, whose items then show in the Library beside Fab's. Apart from the Epic sign-in.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CosmosSignInText), nameof(CanSignInToCosmos), nameof(CosmosStatusText))]
+    public partial bool IsCosmosSignedIn { get; set; }
+
+    /// <summary>A sign-in to Cosmos is under way in the user's browser, and waited for here.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CosmosSignInText), nameof(CanSignInToCosmos), nameof(CosmosStatusText))]
+    public partial bool IsCosmosSigningIn { get; set; }
+
+    /// <summary>Where the sign-in stands, for Settings, where it's done.</summary>
+    public string CosmosStatusText =>
+        IsCosmosSigningIn ? Strings.CosmosSignInWaiting : IsCosmosSignedIn ? Strings.CosmosSignedIn : Strings.CosmosSignedOut;
+
+    /// <summary>Neither signed in to Cosmos nor on the way: the ways to sign in are offered.</summary>
+    public bool CanSignInToCosmos => !IsCosmosSignedIn && !IsCosmosSigningIn;
+
+    /// <summary>What the button does that takes the sign-in back: ends the wait for the browser, or signs out.</summary>
+    public string CosmosSignInText => IsCosmosSigningIn ? Strings.CancelCosmosSignIn : Strings.SignOutOfCosmos;
+
+    /// <summary>How often Cosmos is asked whether the sign-in in the browser is done, and how long for; as its own Unreal Engine plugin does.</summary>
+    internal TimeSpan CosmosSignInPoll { get; set; } = TimeSpan.FromSeconds(2);
+    internal TimeSpan CosmosSignInWait { get; set; } = TimeSpan.FromMinutes(5);
+
+    /// <summary>Whether a folder (or where it would be made) can be written in; tests answer it themselves, so none is tried.</summary>
+    internal Func<string, bool> CanWriteTo { get; set; } = FolderAccess.CanWriteUnder;
+
+    /// <summary>Opens a page in the default browser; tests take its place, so none opens.</summary>
+    internal Func<string?, bool> OpenPage { get; set; } = SafeOpen.WebPage;
+
+    private CancellationTokenSource? _cosmosSignIn;
+
+    /// <summary>
+    /// Signs in to Cosmos in the user's own browser, with Google or GitHub: the browser goes to Cosmos's page for it, and
+    /// Cosmos is asked now and then whether it's done. Nothing is typed here, and nothing comes back through the browser.
+    /// </summary>
+    [RelayCommand]
+    private async Task SignInToCosmosInBrowserAsync(string provider)
+    {
+        if (!CanSignInToCosmos)
+            return;
+        var signIn = CosmosClient.StartBrowserSignIn(provider);
+        if (!OpenPage(signIn.URL))
+        {
+            Notice = Localized.Format(Strings.CouldNotOpen, CosmosEndpoints.Site);
+            return;
+        }
+
+        using var waiting = _cosmosSignIn = new CancellationTokenSource(CosmosSignInWait);
+        IsCosmosSigningIn = true;
+        Notice = Strings.CosmosSignInWaiting;
+        string? token = null;
+        try
+        {
+            while (token is null)
+            {
+                await Task.Delay(CosmosSignInPoll, waiting.Token);
+                token = await Services.Cosmos.TryFinishBrowserSignInAsync(signIn, waiting.Token);
+            }
+            Notice = null;
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancelled here, or not finished in the browser in time: the notice says which.
+            Notice = _cosmosSignIn == waiting ? Strings.CosmosSignInTimedOut : null;
+        }
+        catch (Exception ex) when (ex is CosmosException or HttpRequestException)
+        {
+            Notice = Localized.Format(Strings.SignInFailed, ex.Message);
+        }
+        finally
+        {
+            if (_cosmosSignIn == waiting)
+                _cosmosSignIn = null;
+            IsCosmosSigningIn = false;
+        }
+        if (token is not null)
+            await UseCosmosTokenAsync(token);
+    }
+
+    private async Task UseCosmosTokenAsync(string token)
+    {
+        try
+        {
+            Services.CosmosTokens.Save(token);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Notice = Localized.Format(Strings.SignInFailed, ex.Message);
+            return;
+        }
+        IsCosmosSignedIn = true;
+        await Fab.LoadAsync(includeLibrary: false);
+    }
+
+    /// <summary>Ends the wait for a sign-in in the browser; signed in, signs out of Cosmos.</summary>
+    [RelayCommand]
+    private async Task LeaveCosmosAsync()
+    {
+        if (_cosmosSignIn is { } waiting)
+        {
+            _cosmosSignIn = null; // tells the wait it was ended here, not timed out
+            waiting.Cancel();
+            return;
+        }
+        if (!IsCosmosSignedIn)
+            return;
+        ForgetCosmos();
+        await Fab.LoadAsync(includeLibrary: false);
+    }
+
+    /// <summary>Cosmos turned the saved sign-in down (it ran out, or was ended on its site): signed out here too, with the reason.</summary>
+    internal void CosmosSessionEnded()
+    {
+        ForgetCosmos();
+        Notice = Strings.CosmosSessionEnded;
+    }
+
+    private void ForgetCosmos()
+    {
+        try
+        {
+            Services.CosmosTokens.Delete();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Notice = Localized.Format(Strings.CouldNotSignOutOfCosmos, ex.Message);
+            return;
+        }
+        IsCosmosSignedIn = false;
+        Fab.Cosmos = null;
+    }
+
     private async Task RefreshAfterAccountChangeAsync()
     {
         await RefreshCoreAsync(includeOwned: true);
@@ -758,7 +894,7 @@ public partial class MainViewModel : ViewModelBase
     /// <summary>Opens a page of Fab, Epic or GitHub in the browser; anything else is refused (see <see cref="SafeOpen"/>).</summary>
     internal void OpenWebPage(string? url)
     {
-        if (!string.IsNullOrEmpty(url) && !SafeOpen.WebPage(url))
+        if (!string.IsNullOrEmpty(url) && !OpenPage(url))
             Notice = Localized.Format(Strings.CouldNotOpen, url);
     }
 

@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.TextFormatting;
+using Avalonia.VisualTree;
 using UnVault.App.ViewModels;
 
 namespace UnVault.App.Views;
@@ -17,6 +18,12 @@ public partial class FabItemView : UserControl
     public FabItemView()
     {
         InitializeComponent();
+        // A click on the tile opens the item's preview; one on its buttons is theirs (the ⋯ menu has Details for the keyboard).
+        Tapped += (_, e) =>
+        {
+            if ((e.Source as Visual)?.FindAncestorOfType<Button>(includeSelf: true) is null)
+                (DataContext as FabItemViewModel)?.ShowPreviewCommand.Execute(null);
+        };
     }
 
     // The grid only creates tiles for rows on screen and reuses them while scrolling, so a tile's picture is

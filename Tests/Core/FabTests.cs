@@ -91,6 +91,91 @@ public sealed class FabTests : IDisposable
         Assert.Equal("Someone", items[0].Seller);
     }
 
+    [Theory]
+    [InlineData("https://www.fab.com/listings/1f65d477-f44e-4ccb-95c1-788c99e33b56", "1f65d477-f44e-4ccb-95c1-788c99e33b56")]
+    [InlineData("https://www.unrealengine.com/marketplace/en-US/product/garden-pack", null)] // an old Marketplace page: no listing
+    [InlineData("https://www.fab.com/listings/", null)]
+    [InlineData(null, null)]
+    public void A_library_item_names_its_listing_by_its_link(string? url, string? listingID) =>
+        Assert.Equal(listingID, new FabLibraryItem { URL = url }.ListingID);
+
+    /// <summary>What a listing's page shows under "Technical details": the seller's notes, then the fields they filled in.</summary>
+    [Fact]
+    public void Technical_details_read_as_the_page_shows_them()
+    {
+        using var answer = System.Text.Json.JsonDocument.Parse("""
+            { "assetFormatType": { "code": "unreal-engine" },
+              "techDetails": {
+                "animation": null, "vfx": null,
+                "threeDModel": {
+                  "additionalInformation": "<p>Total number of unique meshes: 15</p><p>Wind &amp; seasons shader</p>",
+                  "distributionMethod": "asset_pack", "uniqueMeshesCount": 15, "hasCollision": true, "isNaniteEnabled": false,
+                  "lodsCount": null, "animationTypes": [], "supportedDevelopmentPlatforms": ["windows", "mac"],
+                  "collisionType": "automatically_generated", "trianglesCountRange": { "lower": 1200, "upper": 48000 },
+                  "textureResolutionRange": { "lower": 4096, "upper": 4096 }, "boundingBoxSize": "" } },
+              "versions": [ { "artifactId": "MS_Maple_UE51" } ] }
+            """);
+
+        Assert.Equal("""
+            Total number of unique meshes: 15
+
+            Wind & seasons shader
+
+            Unique meshes count: 15
+            Has collision: Yes
+            Is nanite enabled: No
+            Supported development platforms: windows, mac
+            Collision type: automatically generated
+            Triangles count range: 1200 – 48000
+            Texture resolution range: 4096
+            """.ReplaceLineEndings("\n"), FabTechnicalDetails.ToText(answer.RootElement));
+
+        foreach (string none in (string[])["""{ "techDetails": { "threeDModel": null } }""", """{ "techDetails": "soon" }""", "{}", "[]"])
+        {
+            using var empty = System.Text.Json.JsonDocument.Parse(none);
+            Assert.Equal("", FabTechnicalDetails.ToText(empty.RootElement));
+        }
+    }
+
+    [Fact]
+    public void Listings_are_kept_and_asked_for_again_only_after_a_while()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"unvault-fab-listings-{Guid.NewGuid():N}.json");
+        try
+        {
+            Assert.Empty(FabListingCache.Load(path)); // none yet
+            FabListingCache.Save(new()
+            {
+                ["fresh"] = new FabListing
+                {
+                    ListingType = "3d-model", Tags = [new FabTag { Name = "Tree" }], AverageRating = 4.6, ReviewCount = 60, FetchedAt = DateTimeOffset.UtcNow.AddDays(-1), Fields = FabListingCache.Fields,
+                    Medias =
+                    [
+                        new FabMedia { Type = "image", MediaURL = "https://media.fab.com/image_previews/gallery_images/a/1.jpg" },
+                        new FabMedia { Type = "video", MediaURL = "https://media.fab.com/videos/2.mp4" },
+                        new FabMedia { Type = "image", MediaURL = "http://media.fab.com/plain.jpg" }, // not over https: left out
+                    ],
+                },
+                ["old"] = new FabListing { FetchedAt = DateTimeOffset.UtcNow - FabListingCache.MaxAge - TimeSpan.FromHours(1), Fields = FabListingCache.Fields },
+                ["thinner"] = new FabListing { ListingType = "3d-model", FetchedAt = DateTimeOffset.UtcNow.AddDays(-1) }, // read before its gallery was kept
+            }, path);
+
+            var listings = FabListingCache.Load(path);
+
+            Assert.Equal(("3d-model", "Tree", 4.6, 60), (listings["fresh"].ListingType, listings["fresh"].Tags!.Single().Name, listings["fresh"].AverageRating, listings["fresh"].ReviewCount));
+            Assert.Equal(["https://media.fab.com/image_previews/gallery_images/a/1.jpg"], listings["fresh"].Pictures);
+            Assert.Equal((false, true, true, true),
+                (FabListingCache.IsDue(listings, "fresh"), FabListingCache.IsDue(listings, "old"), FabListingCache.IsDue(listings, "thinner"), FabListingCache.IsDue(listings, "never-read")));
+
+            File.WriteAllText(path, "{ damaged");
+            Assert.Empty(FabListingCache.Load(path)); // only costs reading them again
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
     [Fact]
     public void Library_cache_round_trips_for_its_own_account_only()
     {

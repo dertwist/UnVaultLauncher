@@ -819,6 +819,18 @@
     <value>Download {0}  ·  {1} on disk</value>
     <comment>{0}: download size, {1}: space it takes once installed.</comment>
   </data>
+  <data name="FolderNeedsAdministrator" xml:space="preserve">
+    <value>Windows lets only administrators change this folder, and UnVault Launcher isn't run as one. Choose another folder here, or set one for all engines in Settings.</value>
+    <comment>In the install window, about the folder chosen: typically C:\Program Files\Epic Games, where the Epic Games Launcher installs.</comment>
+  </data>
+  <data name="FolderNeedsAdministratorToChange" xml:space="preserve">
+    <value>Windows lets only administrators change this folder, and UnVault Launcher isn't run as one. Change this engine with the Epic Games Launcher, or start UnVault Launcher as administrator.</value>
+    <comment>In the window that changes an installed engine's components, about the engine's folder.</comment>
+  </data>
+  <data name="AccessDenied" xml:space="preserve">
+    <value>{0} If that's under Program Files, only administrators can write there: use a folder of your own, or start UnVault Launcher as administrator.</value>
+    <comment>An operation failed because Windows refused a file or folder. {0}: Windows' message, possibly in English, ending in a full stop.</comment>
+  </data>
   <data name="NotEnoughSpaceOnDrive" xml:space="preserve">
     <value>Not enough free space on that drive.</value>
   </data>
@@ -961,6 +973,309 @@
   <data name="UpdateAvailableFilterCount" xml:space="preserve">
     <value>Update Available ({0:N0})</value>
     <comment>The same filter, with how many items it would show.</comment>
+  </data>
+  <data name="AllCategories" xml:space="preserve">
+    <value>All Categories</value>
+    <comment>Filter: items in any of Fab's categories.</comment>
+  </data>
+  <data name="AllSellers" xml:space="preserve">
+    <value>All Sellers</value>
+    <comment>Filter: items from anyone.</comment>
+  </data>
+  <data name="AllListingTypes" xml:space="preserve">
+    <value>All Listing Types</value>
+    <comment>Filter: whatever Fab sells the item as (3D model, tool…).</comment>
+  </data>
+  <data name="SortBy" xml:space="preserve">
+    <value>Sort by:</value>
+    <comment>Label before the list of the Library's orders.</comment>
+  </data>
+  <data name="SortNewest" xml:space="preserve">
+    <value>Newest</value>
+    <comment>Order of the Library's items: those added to the library last come first.</comment>
+  </data>
+  <data name="SortOldest" xml:space="preserve">
+    <value>Oldest</value>
+    <comment>Order of the Library's items: those added to the library first come first.</comment>
+  </data>
+  <data name="SortTitleAscending" xml:space="preserve">
+    <value>Title A-Z</value>
+    <comment>Order of the Library's items.</comment>
+  </data>
+  <data name="SortTitleDescending" xml:space="preserve">
+    <value>Title Z-A</value>
+    <comment>Order of the Library's items.</comment>
+  </data>
+  <data name="SortLastUpdated" xml:space="preserve">
+    <value>Last Updated</value>
+    <comment>Order of the Library's items: those whose current version came out on Fab last come first.</comment>
+  </data>
+  <data name="SortTip" xml:space="preserve">
+    <value>Newest and Oldest go by the order Fab lists your library in, as it doesn't say when you got an item. Last Updated fills in as Fab is asked about each item.</value>
+    <comment>Tooltip of the Library's order list.</comment>
+  </data>
+  <data name="InstalledOnly" xml:space="preserve">
+    <value>Installed Only</value>
+    <comment>Filter: show only plugins installed in an engine.</comment>
+  </data>
+  <data name="FavoritesOnly" xml:space="preserve">
+    <value>Favorites Only</value>
+    <comment>Filter: show only items the user marked as favorites.</comment>
+  </data>
+  <data name="ShowHidden" xml:space="preserve">
+    <value>Show Hidden</value>
+    <comment>Filter: also show items the user hid from the Library.</comment>
+  </data>
+  <data name="AddToFavorites" xml:space="preserve">
+    <value>Add to Favorites</value>
+  </data>
+  <data name="RemoveFromFavorites" xml:space="preserve">
+    <value>Remove from Favorites</value>
+  </data>
+  <data name="HideFromLibrary" xml:space="preserve">
+    <value>Hide from Library</value>
+    <comment>An item's menu: leaves it out of the Library until hidden items are shown.</comment>
+  </data>
+  <data name="ShowInLibrary" xml:space="preserve">
+    <value>Show in Library</value>
+    <comment>A hidden item's menu: undoes Hide from Library.</comment>
+  </data>
+  <data name="Favorite" xml:space="preserve">
+    <value>Favorite</value>
+    <comment>Tooltip of the star on an item the user marked as a favorite.</comment>
+  </data>
+  <data name="SectionCosmos" xml:space="preserve">
+    <value>COSMOS</value>
+    <comment>Settings heading. Cosmos is Leartes Studios' asset store; a name, not translated.</comment>
+  </data>
+  <data name="CosmosWithGoogle" xml:space="preserve">
+    <value>Sign In with Google</value>
+    <comment>Settings, Cosmos: opens Cosmos's sign-in with Google in the user's browser.</comment>
+  </data>
+  <data name="CosmosWithGitHub" xml:space="preserve">
+    <value>Sign In with GitHub</value>
+    <comment>Settings, Cosmos: opens Cosmos's sign-in with GitHub in the user's browser.</comment>
+  </data>
+  <data name="CosmosSignedIn" xml:space="preserve">
+    <value>Signed in. Your Cosmos items show in the Library.</value>
+  </data>
+  <data name="CosmosSignedOut" xml:space="preserve">
+    <value>Not signed in.</value>
+    <comment>Settings, Cosmos.</comment>
+  </data>
+  <data name="CosmosSignInHint" xml:space="preserve">
+    <value>Shows what you own on Leartes' Cosmos store beside your Fab library. You sign in in your own browser; Cosmos offers that for accounts made with Google or GitHub.</value>
+  </data>
+  <data name="SignOutOfCosmos" xml:space="preserve">
+    <value>Sign Out of Cosmos</value>
+  </data>
+  <data name="CancelCosmosSignIn" xml:space="preserve">
+    <value>Cancel Cosmos Sign-In</value>
+    <comment>Button, while a sign-in to Cosmos in the user's browser is waited for.</comment>
+  </data>
+  <data name="CosmosSignInWaiting" xml:space="preserve">
+    <value>Finish signing in to Cosmos in your browser. The Library picks it up by itself.</value>
+  </data>
+  <data name="CosmosSignInTimedOut" xml:space="preserve">
+    <value>The Cosmos sign-in wasn't finished in the browser in time. Start it again when you're ready.</value>
+  </data>
+  <data name="CosmosSessionEnded" xml:space="preserve">
+    <value>Cosmos no longer accepts the saved sign-in. Sign in to Cosmos again to see your items there.</value>
+  </data>
+  <data name="CouldNotSignOutOfCosmos" xml:space="preserve">
+    <value>Couldn't remove the saved Cosmos sign-in: {0}</value>
+    <comment>{0}: what went wrong, possibly in English.</comment>
+  </data>
+  <data name="LoadingCosmos" xml:space="preserve">
+    <value>Loading your Cosmos items…</value>
+  </data>
+  <data name="LoadingCosmosRead" xml:space="preserve">
+    <value>Loading your Cosmos items… {0:N0} read</value>
+  </data>
+  <data name="CosmosLoadFailed" xml:space="preserve">
+    <value>Couldn't load your Cosmos items: {0}</value>
+    <comment>{0}: what went wrong, possibly in English.</comment>
+  </data>
+  <data name="AllSources" xml:space="preserve">
+    <value>All Sources</value>
+    <comment>Filter: items from Fab and from Cosmos.</comment>
+  </data>
+  <data name="SourceFab" xml:space="preserve">
+    <value>Fab</value>
+    <comment>Filter: only items from Epic's Fab store. A name; not translated.</comment>
+  </data>
+  <data name="SourceCosmos" xml:space="preserve">
+    <value>Cosmos</value>
+    <comment>Filter, and the label of an item from Leartes' Cosmos store. A name; not translated.</comment>
+  </data>
+  <data name="DownloadFromCosmosTip" xml:space="preserve">
+    <value>Downloads its files for Unreal Engine from Cosmos into your Cosmos folder</value>
+  </data>
+  <data name="PhaseAskingCosmos" xml:space="preserve">
+    <value>Asking Cosmos for the files</value>
+    <comment>A step of a download from Cosmos.</comment>
+  </data>
+  <data name="InCosmosFolder" xml:space="preserve">
+    <value>In your Cosmos folder: {0} ({1})</value>
+    <comment>{0}: the file's name, {1}: its size.</comment>
+  </data>
+  <data name="PickCosmosFolder" xml:space="preserve">
+    <value>Folder for Cosmos Downloads</value>
+    <comment>Title of the folder picker.</comment>
+  </data>
+  <data name="CosmosFolderHint" xml:space="preserve">
+    <value>Where downloads from Cosmos are kept, as the files Cosmos hands out. Leave empty for a Cosmos folder in your Downloads.</value>
+  </data>
+  <data name="DownloadToCosmosFolder" xml:space="preserve">
+    <value>Download to Cosmos Folder</value>
+    <comment>A Cosmos item's menu: its files as Cosmos hands them out, and no further.</comment>
+  </data>
+  <data name="NoteAlreadyInCosmosFolder" xml:space="preserve">
+    <value>Already in your Cosmos folder: nothing to download.</value>
+  </data>
+  <data name="NoteCosmosDownloadsAndAdds_One" xml:space="preserve">
+    <value>Downloads into your Cosmos folder and adds it to the project.</value>
+    <comment>The count of projects that take a downloaded copy isn't shown.</comment>
+  </data>
+  <data name="NoteCosmosDownloadsAndAdds_Other" xml:space="preserve">
+    <value>Downloads into your Cosmos folder and adds it to the projects.</value>
+    <comment>The count of projects that take a downloaded copy isn't shown.</comment>
+  </data>
+  <data name="NoteCosmosDownloadsAndCreates" xml:space="preserve">
+    <value>Downloads into your Cosmos folder and creates the project.</value>
+  </data>
+  <data name="OpenOnCosmos" xml:space="preserve">
+    <value>Open on Cosmos</value>
+    <comment>In the menu and preview of an item from Cosmos: opens its page there.</comment>
+  </data>
+  <data name="Details" xml:space="preserve">
+    <value>Details</value>
+    <comment>An item's menu: opens its preview beside the Library, as clicking its tile does.</comment>
+  </data>
+  <data name="ClosePreview" xml:space="preserve">
+    <value>Close Preview</value>
+    <comment>Tooltip and screen reader name of the × on an item's preview.</comment>
+  </data>
+  <data name="DetailType" xml:space="preserve">
+    <value>Type</value>
+    <comment>In an item's preview: plugin, asset pack or project.</comment>
+  </data>
+  <data name="DetailCategory" xml:space="preserve">
+    <value>Category</value>
+    <comment>In an item's preview: Fab's category for it.</comment>
+  </data>
+  <data name="DetailListingType" xml:space="preserve">
+    <value>Listing Type</value>
+    <comment>In an item's preview: what Fab sells it as (3D model, tool…).</comment>
+  </data>
+  <data name="DetailEngines" xml:space="preserve">
+    <value>Engine Versions</value>
+    <comment>In an item's preview.</comment>
+  </data>
+  <data name="DetailUpdated" xml:space="preserve">
+    <value>Last Updated</value>
+    <comment>In an item's preview: when its current version came out on Fab.</comment>
+  </data>
+  <data name="DetailObjectType" xml:space="preserve">
+    <value>Object Type</value>
+    <comment>In a Cosmos item's preview: what it is, as Cosmos puts it (prop…).</comment>
+  </data>
+  <data name="DetailSize" xml:space="preserve">
+    <value>Size</value>
+    <comment>In an item's preview: what its files come to.</comment>
+  </data>
+  <data name="DetailRating" xml:space="preserve">
+    <value>Rating</value>
+    <comment>In an item's preview: buyers' rating on Fab.</comment>
+  </data>
+  <data name="DetailRatingValue" xml:space="preserve">
+    <value>{0:0.0} / 5 ({1:N0})</value>
+    <comment>{0}: the rating out of 5, {1}: how many reviews.</comment>
+  </data>
+  <data name="DetailReleased" xml:space="preserve">
+    <value>Released</value>
+    <comment>In an item's preview: when it first came out on Fab.</comment>
+  </data>
+  <data name="DetailPolygons" xml:space="preserve">
+    <value>Polygons</value>
+    <comment>In a Cosmos item's preview: at full detail.</comment>
+  </data>
+  <data name="DetailMeshes" xml:space="preserve">
+    <value>Meshes</value>
+    <comment>In a Cosmos item's preview: how many.</comment>
+  </data>
+  <data name="DetailTextures" xml:space="preserve">
+    <value>Textures</value>
+    <comment>In a Cosmos item's preview: how many.</comment>
+  </data>
+  <data name="DetailTextureSizes" xml:space="preserve">
+    <value>Texture Sizes</value>
+    <comment>In a Cosmos item's preview: pixels along a side.</comment>
+  </data>
+  <data name="DetailMaterialInstances" xml:space="preserve">
+    <value>Material Instances</value>
+    <comment>In a Cosmos item's preview: how many.</comment>
+  </data>
+  <data name="DetailCollision" xml:space="preserve">
+    <value>Collision</value>
+    <comment>In a Cosmos item's preview: whether its meshes come with collision. Followed by Yes or No.</comment>
+  </data>
+  <data name="TechnicalDetails" xml:space="preserve">
+    <value>Technical Details</value>
+    <comment>Heading in an item's preview, over what its store's page tells of its contents.</comment>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="DetailFormats" xml:space="preserve">
+    <value>Formats</value>
+    <comment>In a Cosmos item's preview: the 3D file formats it comes in.</comment>
+  </data>
+  <data name="ViewFullSize" xml:space="preserve">
+    <value>View Full Size</value>
+    <comment>Tooltip and screen reader name of the large picture in an item's preview: a click opens it over the window, to zoom into.</comment>
+  </data>
+  <data name="PreviousPicture" xml:space="preserve">
+    <value>Previous Picture</value>
+  </data>
+  <data name="NextPicture" xml:space="preserve">
+    <value>Next Picture</value>
+  </data>
+  <data name="PictureViewerHint" xml:space="preserve">
+    <value>Scroll to zoom  ·  Drag to move  ·  Double-click to fit</value>
+    <comment>Under a picture shown at full size.</comment>
+  </data>
+  <data name="ResizePreview" xml:space="preserve">
+    <value>Drag to resize</value>
+    <comment>Tooltip of the left edge of an item's preview.</comment>
+  </data>
+  <data name="ShowLarge" xml:space="preserve">
+    <value>Show Large</value>
+    <comment>Tooltip and screen reader name of a small picture in an item's preview: a click shows it in the large place above.</comment>
+  </data>
+  <data name="DownloadShown" xml:space="preserve">
+    <value>Download Shown ({0:N0})</value>
+    <comment>Button: downloads the items the search and filters leave into the Vault Cache. {0}: how many downloads that is.</comment>
+  </data>
+  <data name="DownloadShownTip" xml:space="preserve">
+    <value>Downloads what's shown into your Vault Cache: the copy for the engine chosen above, or else for each item's newest engine. Items already there are left out.</value>
+  </data>
+  <data name="ConfirmDownloadShownTitle_One" xml:space="preserve">
+    <value>Download {0:N0} Item?</value>
+    <comment>{0}: how many downloads Download Shown starts.</comment>
+  </data>
+  <data name="ConfirmDownloadShownTitle_Other" xml:space="preserve">
+    <value>Download {0:N0} Items?</value>
+  </data>
+  <data name="ConfirmDownloadShownMessage" xml:space="preserve">
+    <value>They download into your Vault Cache, one after another.</value>
+  </data>
+  <data name="StartDownloads" xml:space="preserve">
+    <value>Download</value>
+    <comment>Button that confirms Download Shown.</comment>
   </data>
   <data name="ScanningDownloads" xml:space="preserve">
     <value>Scanning downloads and installs…</value>

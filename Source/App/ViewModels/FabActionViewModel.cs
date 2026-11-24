@@ -260,7 +260,9 @@ public partial class FabActionViewModel : ViewModelBase, IShowsBusy
     private bool SignedIn => _library.Owner.IsSignedIn;
 
     /// <summary>A version can be used if it's already downloaded, or can be downloaded (signed in, in the online library).</summary>
-    private bool CanGet(FabVersion version) => version.IsDownloaded || (SignedIn && version.Library is not null && _item.Library is not null);
+    private bool CanGet(FabVersion version) =>
+        version.IsDownloaded || (SignedIn && version.Library is not null && _item.Library is not null)
+        || _item.Cosmos is { } cosmos && (_library.Owner.IsCosmosSignedIn || _library.CosmosFileFor(cosmos, version) is not null);
 
     public async Task LoadAsync()
     {
@@ -537,7 +539,11 @@ public partial class FabActionViewModel : ViewModelBase, IShowsBusy
     /// <summary>Null when there's nothing to add: a plugin that isn't downloaded yet just downloads into the engine.</summary>
     /// <param name="targets">How many projects get a downloaded copy.</param>
     private string? DescribeSource(FabVersion version, int targets) =>
-        version.IsOutdated
+        _item.Cosmos is { } cosmos
+            ? _library.CosmosFileFor(cosmos, version) is not null ? Strings.NoteAlreadyInCosmosFolder
+                : Mode == FabActionMode.CreateProject ? Strings.NoteCosmosDownloadsAndCreates
+                : Localized.Plural(nameof(Strings.NoteCosmosDownloadsAndAdds_Other), targets)
+        : version.IsOutdated
             ? Mode == FabActionMode.InstallPlugin
                 ? Strings.NoteOlderCopyInstall
                 : Strings.NoteOlderCopyUpdate

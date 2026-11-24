@@ -35,7 +35,36 @@ public partial class FabLibraryView : UserControl
             _scrolledSinceRelief = 0;
             MemoryRelief.Release();
         };
+
+        // The preview's left edge is dragged to make it wider or narrower; the grid keeps room for a column of tiles.
+        PreviewEdge.PointerPressed += (_, e) =>
+        {
+            if (_viewModel is null || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+                return;
+            _resizeFrom = (e.GetPosition(this).X, _viewModel.PreviewWidth);
+            e.Pointer.Capture(PreviewEdge);
+            e.Handled = true;
+        };
+        PreviewEdge.PointerMoved += (_, e) =>
+        {
+            if (_viewModel is null || _resizeFrom is not var (pointerX, width))
+                return;
+            double room = Bounds.Width - FabRowView.TileWidth - 60;
+            _viewModel.PreviewWidth = Math.Min(width + pointerX - e.GetPosition(this).X, Math.Max(FabLibraryViewModel.MinPreviewWidth, room));
+        };
+        PreviewEdge.PointerReleased += (_, e) =>
+        {
+            if (_resizeFrom is null)
+                return;
+            _resizeFrom = null;
+            e.Pointer.Capture(null);
+            _viewModel?.SavePreviewWidth();
+        };
+        PreviewEdge.PointerCaptureLost += (_, _) => _resizeFrom = null;
     }
+
+    /// <summary>While the preview's edge is dragged: where the pointer was when it began, and how wide the preview was.</summary>
+    private (double PointerX, double Width)? _resizeFrom;
 
     protected override void OnDataContextChanged(EventArgs e)
     {

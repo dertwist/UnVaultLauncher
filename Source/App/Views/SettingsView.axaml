@@ -75,6 +75,26 @@
                                        FormatString="0" Width="130" Margin="16,0,0,0" VerticalAlignment="Center" />
                     </Grid>
 
+                    <!-- Leartes' Cosmos store: signed in to in the user's own browser, and at once, not on Save -->
+                    <TextBlock Text="{x:Static s:Strings.SectionCosmos}" Classes="section" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{Binding Owner.CosmosStatusText}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" Margin="16,0,0,0" VerticalAlignment="Center">
+                            <Button Content="{x:Static s:Strings.CosmosWithGoogle}" Command="{Binding Owner.SignInToCosmosInBrowserCommand}" CommandParameter="google"
+                                    IsVisible="{Binding Owner.CanSignInToCosmos}" />
+                            <Button Content="{x:Static s:Strings.CosmosWithGitHub}" Command="{Binding Owner.SignInToCosmosInBrowserCommand}" CommandParameter="github"
+                                    IsVisible="{Binding Owner.CanSignInToCosmos}" />
+                            <Button Content="{Binding Owner.CosmosSignInText}" Command="{Binding Owner.LeaveCosmosCommand}"
+                                    IsVisible="{Binding !Owner.CanSignInToCosmos}" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Text="{x:Static s:Strings.CosmosSignInHint}" Classes="muted small" TextWrapping="Wrap" Margin="0,6,0,0" />
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,12,0,0">
+                        <TextBox Text="{Binding CosmosDirectory}" PlaceholderText="{Binding CosmosPlaceholder}" />
+                        <Button Grid.Column="1" Content="{x:Static s:Strings.Browse}" Margin="8,0,0,0" Command="{Binding BrowseCosmosFolderCommand}" />
+                    </Grid>
+                    <TextBlock Text="{x:Static s:Strings.CosmosFolderHint}" Classes="muted small" TextWrapping="Wrap" Margin="0,6,0,0" />
+
                     <TextBlock Text="{x:Static s:Strings.SectionSystem}" Classes="section" />
                     <CheckBox Content="{x:Static s:Strings.CheckForUpdatesAtStartup}" IsChecked="{Binding CheckForUpdates}" />
                     <TextBlock Text="{x:Static s:Strings.CheckForUpdatesHint}"

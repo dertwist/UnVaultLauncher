@@ -4,7 +4,8 @@ A streamlined and lightweight launcher for installing and managing Unreal Engine
 
 - **Engines**: install, update, modify, verify and repair. Untick platforms, debug symbols or templates to save disk space.
 - **Projects**: open and sort them into your own categories.
-- **Library**: install plugins into engines or projects (with optional recompilation), add asset packs to projects and create projects.
+- **Library**: install plugins into engines or projects (with optional recompilation), add asset packs to projects and create projects. Filter by category, seller, listing type and engine, sort, mark favorites, preview an item, and download everything shown at once.
+- **Cosmos** (optional): sign in to Leartes' Cosmos store to see what you own there beside your Fab library, add it to projects or create projects from it.
 - **Downloads**: pause, resume and retry, with a history.
 - **Works alongside the Epic Games Launcher**: uses its engines, plugins, Vault Cache and project folders.
 
@@ -40,7 +41,7 @@ There's also a command-line tool for engines, for scripting and diagnostics. It 
 - You sign in on Epic's own page; the app never sees your password.
 - Your session is stored encrypted for your Windows account and sent only to Epic.
 - Downloads use HTTPS and are checked against the hashes in Epic's manifests.
-- Connects only to Epic, Fab and GitHub (the update check, which Settings can turn off).
+- Connects only to Epic, Fab and GitHub (the update check, which Settings can turn off). If you sign in to Cosmos, also to Leartes: you sign in in your own browser (with Google or GitHub), and that sign-in is stored encrypted and sent only to Leartes.
 - Keeps its own data (sign-in, settings, caches) in `%LOCALAPPDATA%\UnVaultLauncher`.
 - No telemetry, no background service, no admin rights. Only an engine's prerequisites installer may ask for them.
 - Releases aren't code-signed, so Windows may warn about an unknown publisher.

@@ -1,5 +1,6 @@
 using System.Net.Http;
 using UnVault.Core;
+using UnVault.Core.Cosmos;
 using UnVault.Core.Epic;
 
 namespace UnVault.App.Services;
@@ -11,12 +12,14 @@ public sealed class AppServices
     {
     }
 
-    /// <summary>Tests give their own connection to Epic, and their own saved session.</summary>
-    internal AppServices(HttpClient http, SessionStore sessions)
+    /// <summary>Tests give their own connection to Epic, and their own saved sign-ins.</summary>
+    internal AppServices(HttpClient http, SessionStore sessions, CosmosTokenStore? cosmosTokens = null)
     {
         HTTP = http;
         Account = new EpicAccount(new EpicAuthClient(HTTP), sessions);
         API = new EpicAPIClient(HTTP, Account);
+        Cosmos = new CosmosClient(HTTP);
+        CosmosTokens = cosmosTokens ?? CosmosTokenStore.Default;
         Thumbnails = new ThumbnailCache(HTTP);
         Updates = new UpdateChecker(HTTP);
     }
@@ -24,6 +27,8 @@ public sealed class AppServices
     public HttpClient HTTP { get; }
     public EpicAccount Account { get; }
     public EpicAPIClient API { get; }
+    public CosmosClient Cosmos { get; }
+    public CosmosTokenStore CosmosTokens { get; }
     public ThumbnailCache Thumbnails { get; }
     public UpdateChecker Updates { get; }
 }
